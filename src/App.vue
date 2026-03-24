@@ -1,14 +1,13 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-100">
-    <div class="p-8 bg-white rounded-xl shadow-2xl text-center">
-      <h1 class="text-4xl font-bold text-primary mb-4">
-        🚗 Autoclean Client
-      </h1>
-      <p class="text-gray-600">Tailwind CSS est bien installé !</p>
-    </div>
+  <div class="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-800">
+    <NavBar />
+    
+    <main class="flex-grow">
+      <router-view />
+    </main>
   </div>
 </template>
 
 <script setup>
-// On laisse le script vide pour l'instant
+import NavBar from './components/NavBar.vue'
 </script>

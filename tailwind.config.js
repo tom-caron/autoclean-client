@@ -7,8 +7,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#2563eb', // Un beau bleu de lavage auto (Tailwind blue-600)
-        secondary: '#1e40af', // Bleu plus foncé
+        primary: '#78e0dc',   // Le turquoise principal
+        secondary: '#8eedf7', // Le bleu ciel clair
+        tertiary: '#a1cdf1',  // Le bleu pastel plus doux
       }
     },
   },
