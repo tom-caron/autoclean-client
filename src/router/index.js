@@ -10,24 +10,35 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView
+      component: HomeView,
+      // On ajoute les titres désirés dans la propriété 'meta'
+      meta: { title: 'AutoClean Pro' }
     },
     {
       path: '/login',
       name: 'login',
-      component: LoginView
+      component: LoginView,
+      meta: { title: 'Connexion - AutoClean Pro' }
     },
     {
-      path: '/booking', // ➔ La nouvelle route
+      path: '/booking',
       name: 'booking',
-      component: BookingView
+      component: BookingView,
+      meta: { title: 'AutoClean Pro - Réservation' }
     },
     {
       path: '/my-bookings',
       name: 'my-bookings',
-      component: MyBookingsView
-    },
+      component: MyBookingsView,
+      meta: { title: 'AutoClean Pro - Mes RDV' }
+    }
   ]
+})
+
+router.beforeEach((to, from, next) => {
+  // On récupère le titre défini dans la meta, sinon on met un titre par défaut
+  document.title = to.meta.title || 'AutoClean Pro'
+  next() // On autorise le changement de page
 })
 
 export default router

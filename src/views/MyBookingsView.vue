@@ -38,17 +38,27 @@
               </div>
             </div>
 
-            <div class="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 border-t sm:border-t-0 pt-4 sm:pt-0">
+            <div class="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 border-t sm:border-t-0 pt-4 sm:pt-0">
               <div class="text-right">
                 <p class="font-black text-gray-900">{{ formatDate(booking.date) }}</p>
                 <p class="text-primary font-bold">{{ formatTime(booking.date) }}</p>
               </div>
-              
-              <span :class="getStatusClass(booking.status)" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+              <span :class="getStatusClass(booking.status)" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
                 {{ formatStatus(booking.status) }}
               </span>
+              <div v-if="booking.status === 'Pending' || booking.status === 'Confirmed'" class="flex gap-2">
+                <template v-if="canModify(booking.date)">
+                  <button @click="cancelBooking(booking._id)" class="text-xs font-bold text-red-600 hover:text-white border border-red-600 hover:bg-red-600 px-3 py-1.5 rounded transition">
+                    Annuler
+                  </button>
+                </template>
+                <template v-else>
+                  <p class="text-[10px] text-gray-400 italic text-right w-full max-w-[120px]">
+                    Moins de 48h restantes.<br>Contactez l'agence.
+                  </p>
+                </template>
+              </div>
             </div>
-
           </div>
         </div>
       </div>
@@ -67,10 +77,9 @@ const isLoading = ref(true)
 const fetchMyBookings = async () => {
   try {
     const response = await api.get('/bookings/my-bookings')
-    // On trie pour avoir les plus récents en haut
     bookings.value = response.data.data.sort((a, b) => new Date(b.date) - new Date(a.date))
   } catch (error) {
-    console.error("Erreur lors de la récupération des réservations", error)
+    console.error("Erreur", error)
   } finally {
     isLoading.value = false
   }
@@ -78,27 +87,44 @@ const fetchMyBookings = async () => {
 
 onMounted(fetchMyBookings)
 
-// Fonctions utilitaires pour le formatage
-const formatDate = (dateStr) => {
-  return new Date(dateStr).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+// --- NOUVELLES FONCTIONS DE GESTION ---
+
+// 1. Vérifie si le rdv est dans + de 48h
+const canModify = (dateStr) => {
+  const now = new Date()
+  const bookingDate = new Date(dateStr)
+  const hoursDiff = (bookingDate - now) / (1000 * 60 * 60)
+  return hoursDiff >= 48
 }
 
-const formatTime = (dateStr) => {
-  return new Date(dateStr).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h')
+// 2. Action d'annulation (Appel à la route PUT)
+const cancelBooking = async (bookingId) => {
+  if (!confirm("Êtes-vous sûr de vouloir annuler ce rendez-vous ? Cette action est irréversible.")) return;
+
+  try {
+    // On met à jour le statut à "Cancelled"
+    await api.put(`/bookings/${bookingId}`, { status: 'Cancelled' })
+    alert("Votre rendez-vous a bien été annulé.")
+    
+    // On rafraîchit la liste pour voir le statut passer en rouge !
+    await fetchMyBookings() 
+  } catch (error) {
+    alert(error.response?.data?.message || "Une erreur est survenue lors de l'annulation.")
+  }
 }
 
+// --- FONCTIONS UTILITAIRES EXISTANTES ---
+const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+const formatTime = (dateStr) => new Date(dateStr).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h')
 const formatStatus = (status) => {
   const map = { 'Pending': 'En attente', 'Confirmed': 'Confirmé', 'InProgress': 'En cours', 'Completed': 'Terminé', 'Cancelled': 'Annulé' }
   return map[status] || status
 }
-
 const getStatusClass = (status) => {
   const map = {
-    'Pending': 'bg-yellow-100 text-yellow-700',
-    'Confirmed': 'bg-green-100 text-green-700',
-    'InProgress': 'bg-blue-100 text-blue-700',
-    'Completed': 'bg-gray-100 text-gray-700',
-    'Cancelled': 'bg-red-100 text-red-700'
+    'Pending': 'bg-yellow-100 text-yellow-700', 'Confirmed': 'bg-green-100 text-green-700',
+    'InProgress': 'bg-blue-100 text-blue-700', 'Completed': 'bg-gray-100 text-gray-700',
+    'Cancelled': 'bg-red-100 text-red-700 line-through opacity-70' // J'ai rajouté un petit effet visuel pour les annulés !
   }
   return map[status] || 'bg-gray-100 text-gray-600'
 }
